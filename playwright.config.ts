@@ -22,5 +22,16 @@ export default defineConfig({
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
+    env: {
+      // Fallbacks so the dev server boots in CI / clean checkouts without real
+      // Supabase creds. Real env in process.env (or .env.local when the user
+      // runs their own dev server) is preferred. Tests that hit Supabase must
+      // use `page.route()` to intercept these calls.
+      NEXT_PUBLIC_SUPABASE_URL:
+        process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://test.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY:
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+        "test-anon-key-placeholder",
+    },
   },
 });
