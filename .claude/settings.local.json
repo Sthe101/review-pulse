@@ -7,7 +7,11 @@
       "Skill(update-config)",
       "Bash(node *)",
       "Bash(pip --version)",
-      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\baqvf1aeq.output\")"
+      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\baqvf1aeq.output\")",
+      "Bash(npx playwright *)",
+      "Bash(npm test *)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)"
     ]
   },
   "hooks": {
