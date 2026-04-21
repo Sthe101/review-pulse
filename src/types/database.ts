@@ -172,42 +172,54 @@ export interface Database {
         Row: Profile;
         Insert: Insert<Profile, "id">;
         Update: Update<Profile>;
+        Relationships: [];
       };
       projects: {
         Row: Project;
         Insert: Insert<Project, "user_id" | "name">;
         Update: Update<Project>;
+        Relationships: [];
       };
       reviews: {
         Row: Review;
         Insert: Insert<Review, "project_id" | "content">;
         Update: Update<Review>;
+        Relationships: [];
       };
       analyses: {
         Row: Analysis;
         Insert: Insert<Analysis, "project_id" | "review_count">;
         Update: Update<Analysis>;
+        Relationships: [];
       };
       notification_prefs: {
         Row: NotificationPrefs;
         Insert: Insert<NotificationPrefs, "user_id">;
         Update: Update<NotificationPrefs>;
+        Relationships: [];
       };
       integrations: {
         Row: Integration;
         Insert: Insert<Integration, "user_id" | "platform">;
         Update: Update<Integration>;
+        Relationships: [];
       };
       sync_logs: {
         Row: SyncLog;
         Insert: Insert<SyncLog, "integration_id" | "status">;
         Update: Update<SyncLog>;
+        Relationships: [];
       };
       shared_reports: {
         Row: SharedReport;
         Insert: Insert<SharedReport, "analysis_id" | "user_id">;
         Update: Update<SharedReport>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }

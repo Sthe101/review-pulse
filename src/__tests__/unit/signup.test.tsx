@@ -106,6 +106,14 @@ describe("SignupPage", () => {
     expect(bar).toHaveAttribute("aria-valuenow", "4");
   });
 
+  it("renders the Google OAuth button", () => {
+    render(<SignupPage />);
+    expect(screen.getByText(/or continue with/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /continue with google/i })
+    ).toBeInTheDocument();
+  });
+
   it("calls supabase.auth.signUp with correct args on successful submit", async () => {
     signUpMock.mockResolvedValue({
       data: {

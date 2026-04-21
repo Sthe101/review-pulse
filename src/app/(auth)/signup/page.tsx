@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { OAuthButtons } from "@/components/auth/oauth-buttons";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -174,6 +175,8 @@ export default function SignupPage() {
           {loading ? "Creating account…" : "Create account"}
         </Button>
       </form>
+
+      <OAuthButtons />
 
       <p
         style={{

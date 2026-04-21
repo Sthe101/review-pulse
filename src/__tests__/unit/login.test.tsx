@@ -109,4 +109,12 @@ describe("LoginPage", () => {
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/forgot-password");
   });
+
+  it("renders the Google OAuth button", () => {
+    render(<LoginPage />);
+    expect(screen.getByText(/or continue with/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /continue with google/i })
+    ).toBeInTheDocument();
+  });
 });
