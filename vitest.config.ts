@@ -6,12 +6,10 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
+    // Default environment. API / Node-only tests should add the per-file pragma
+    // `// @vitest-environment node` at the top of the file (replaces the
+    // `environmentMatchGlobs` option removed in Vitest 4).
     environment: "jsdom",
-    environmentMatchGlobs: [
-      ["src/__tests__/integration/**/api/**", "node"],
-      ["src/__tests__/**/*.api.test.ts", "node"],
-      ["src/app/api/**/*.test.ts", "node"],
-    ],
     setupFiles: ["src/test/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["node_modules", ".next", "e2e"],

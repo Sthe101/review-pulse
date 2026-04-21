@@ -38,7 +38,7 @@ Next.js 14, TypeScript, Tailwind, Supabase, Anthropic Claude API, Stripe, Vercel
 - Indexes: `projects(user_id)`, `reviews(project_id)`, `reviews(sentiment)`, `analyses(project_id)`, `analyses(created_at)`, `integrations(user_id)`, partial `integrations(status) WHERE status='connected'`, `sync_logs(integration_id)`, `shared_reports(share_token)`.
 - `src/lib/supabase/client.ts` — `createBrowserClient<Database>` from `@supabase/ssr`, reads `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - `src/lib/supabase/server.ts` — `createServerClient<Database>` with `await cookies()` (Next 15 async API) using the `getAll`/`setAll` cookie interface; try/catch around `setAll` for Server Component safety.
-- `src/lib/supabase/middleware.ts` — `updateSession(request)` helper: refreshes auth token via `supabase.auth.getUser()`, propagates cookies through a rewritten `NextResponse`. Not yet wired — needs `src/middleware.ts` entrypoint.
+- `src/lib/supabase/middleware.ts` — `updateSession(request)` helper: refreshes auth token via `supabase.auth.getUser()`, propagates cookies through a rewritten `NextResponse`. Returns `{ supabaseResponse, user }` so the top-level middleware can make routing decisions without a second Supabase round-trip. (Wired in Step 4.)
 - `src/types/database.ts` — row interfaces (`Profile`, `Project`, `Review`, `Analysis`, `NotificationPrefs`, `Integration`, `SyncLog`, `SharedReport`) + enum unions (`Plan`, `Industry`, `Sentiment`, `IntegrationPlatform`, `IntegrationStatus`, `SyncStatus`) + `OnboardingChecklist`, `AnalysisItem`, `ActionItem`. Exports `Database` generic (`public.Tables.*` with `Row`/`Insert`/`Update`) consumed by all three clients.
 - `pgcrypto` extension required for `gen_random_uuid()` / `gen_random_bytes()` — enabled by default on Supabase.
 
@@ -57,3 +57,28 @@ Next.js 14, TypeScript, Tailwind, Supabase, Anthropic Claude API, Stripe, Vercel
 - `src/__tests__/unit/sanity.test.ts` — trivial `expect(1+1).toBe(2)`. `e2e/sanity.spec.ts` — `page.goto('/')` + `expect(page.locator('text=ReviewPulse')).toBeVisible()`. `src/__tests__/integration/.gitkeep` stubs the dir.
 - `package.json` scripts: `test` (`vitest run`), `test:watch` (`vitest`), `test:e2e` (`playwright test`), `test:coverage` (`vitest run --coverage`), `test:all` (sequential vitest → playwright).
 - Verified: `npm test` → 1 passed in ~10s. `npx playwright test` → 1 passed (2.8s test + ~28s Next dev boot).
+
+### Step 4 — Auth middleware & routing
+- `src/middleware.ts` — top-level Next middleware. Route logic:
+  - **Bypass prefixes** (`/api/stripe/webhook`, `/api/cron`, `/report`) → `NextResponse.next()` before any Supabase call (webhooks/cron must never be redirected or incur an `auth.getUser()` round-trip).
+  - Otherwise calls `updateSession(request)` which refreshes the session cookie and returns the user.
+  - **Protected prefixes** (`/dashboard`, `/projects`, `/trends`, `/integrations`, `/settings`, `/billing`; matched on exact + `/` subpaths): unauthenticated → 302 `/login?next=<pathname>`.
+  - **Auth pages** (`/login`, `/signup` exact): authenticated → 302 `/dashboard`.
+  - On every redirect, refreshed cookies from `supabaseResponse` are copied onto the redirect response via `supabaseResponse.cookies.getAll().forEach(c => redirect.cookies.set(c))` so the session isn't lost across the 302.
+  - `config.matcher` excludes `_next/static`, `_next/image`, `favicon.ico`, and `svg`/`png`/`jpg`/`jpeg`/`gif`/`webp`/`ico` asset requests.
+- `src/lib/supabase/middleware.ts` — updated: `updateSession` now returns `{ supabaseResponse, user }` (previously just the response). Required so `src/middleware.ts` can branch on auth state without a second Supabase call.
+- Build-fix fallout from wiring this up on Vercel:
+  - `src/test/mocks/supabase.ts` — `builder` widened from `Record<string, ReturnType<typeof vi.fn>>` to `Record<string, unknown>`; the `.then` assignment (plain function, not a `vi.fn`) was failing `next build`'s TS pass.
+  - `vitest.config.ts` — `environmentMatchGlobs` removed (deleted in Vitest 4, was breaking `next build`'s type-check of the config file). Replacement: API/Node-only tests add the per-file pragma `// @vitest-environment node` at the top.
+- Next 16 deprecation warning (non-blocking): `⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.` Build log now labels it `ƒ Proxy (Middleware)`. Left as `middleware.ts` for now; migration is rename file → `proxy.ts` + export `proxy` instead of `middleware`.
+- Verified: `npm run build` → compiled + TS passed + 3 static routes (`/`, `/_not-found`, `/test`) + `ƒ Proxy (Middleware)`. `npm test` → 1 passed.
+
+### Step 5 — Middleware unit tests
+- `src/__tests__/unit/middleware.test.ts` — 5 tests, all passing (~2.3s).
+  - File-level pragma `// @vitest-environment node` — `next/server`'s `NextRequest`/`NextResponse` need a Node runtime, not jsdom. This is the pattern called out in `vitest.config.ts` after `environmentMatchGlobs` was removed in Vitest 4.
+  - `vi.mock('@/lib/supabase/middleware', () => ({ updateSession: vi.fn() }))` — hoisted mock so the real Supabase client never gets constructed. Each test sets the return with `mockUpdateSession.mockResolvedValue({ supabaseResponse: NextResponse.next(), user })`.
+  - Request factory: `new NextRequest(new URL('http://localhost:3000' + pathname))`.
+  - Redirect assertions are tolerant on status (`[301, 302, 307, 308]`) — Next's `NextResponse.redirect` defaults to 307 but don't want the test to break if that default changes. Location assertions parse the `Location` header as a URL and check `pathname` + `searchParams.get('next')` precisely.
+  - Bypass tests (`/api/stripe/webhook`, `/report/abc`) assert **both** that no redirect was issued **and** that `updateSession` was never called — proves the short-circuit happens before any Supabase work, not just that we didn't redirect.
+  - Landing test (`/`) runs twice with `mockResolvedValueOnce(null)` then `mockResolvedValueOnce(fakeUser)` and confirms no redirect in either state.
+  - `beforeEach(() => mockUpdateSession.mockReset())` to isolate call counts per test.

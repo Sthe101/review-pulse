@@ -5,7 +5,7 @@ import { vi } from "vitest";
  * Each builder method returns the same mock so `.select().eq().single()` etc. chain.
  */
 function createQueryBuilder(defaultData: unknown = null) {
-  const builder: Record<string, ReturnType<typeof vi.fn>> = {};
+  const builder: Record<string, unknown> = {};
   const chainable = [
     "select",
     "insert",

@@ -28,7 +28,9 @@ export async function updateSession(request: NextRequest) {
 
   // Refreshes the auth token if expired and writes it back to the response.
   // Must be called before any other logic in middleware.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return supabaseResponse;
+  return { supabaseResponse, user };
 }
