@@ -2,20 +2,20 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-6 text-center">
       <svg
-        width="72"
-        height="72"
-        viewBox="0 0 72 72"
+        width="96"
+        height="96"
+        viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="ReviewPulse logo"
       >
-        <rect x="12" y="28" width="10" height="32" rx="2" fill="#14B8A6" />
-        <rect x="31" y="20" width="10" height="40" rx="2" fill="#1E3A8A" />
-        <rect x="50" y="28" width="10" height="32" rx="2" fill="#14B8A6" />
+        <rect x="4" y="18" width="5" height="10" rx="1.5" fill="#0D9488" />
+        <rect x="13" y="10" width="5" height="18" rx="1.5" fill="#1E3A5F" />
+        <rect x="22" y="14" width="5" height="14" rx="1.5" fill="#0D9488" />
         <path
-          d="M8 22 Q24 4 36 18 T64 14"
-          stroke="#F97066"
-          strokeWidth="3"
+          d="M2 16Q8 8 16 12Q24 6 30 10"
+          stroke="#EA580C"
+          strokeWidth="2.5"
           strokeLinecap="round"
           fill="none"
         />

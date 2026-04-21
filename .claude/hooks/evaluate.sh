@@ -10,20 +10,57 @@
 
 set -euo pipefail
 
-input=$(cat)
+# Pick a Python interpreter. On Windows, `python3` often resolves to the
+# Microsoft Store stub; `python` usually points at the real install.
+if command -v python >/dev/null 2>&1; then
+  PY=python
+elif command -v python3 >/dev/null 2>&1; then
+  PY=python3
+else
+  # No Python — fall through to Claude Code's normal permission prompt.
+  exit 0
+fi
 
-tool_name=$(echo "$input" | jq -r '.tool_name // empty')
-command=$(echo "$input"   | jq -r '.tool_input.command   // empty')
-file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+input=$(cat)
+export HOOK_INPUT="$input"
+
+read_field() {
+  "$PY" - "$1" <<'PY'
+import json, os, sys
+key = sys.argv[1]
+try:
+    data = json.loads(os.environ.get("HOOK_INPUT", "") or "{}")
+except Exception:
+    data = {}
+tool_input = data.get("tool_input") or {}
+if key == "tool_name":
+    print(data.get("tool_name", "") or "")
+elif key == "command":
+    print(tool_input.get("command", "") or "")
+elif key == "file_path":
+    print(tool_input.get("file_path", "") or "")
+PY
+}
+
+tool_name=$(read_field tool_name)
+command=$(read_field command)
+file_path=$(read_field file_path)
 
 # Helper: emit a decision and exit. Usage: decide allow|deny|ask "reason"
 decide() {
   local decision="$1"
   local reason="$2"
-  jq -n \
-    --arg d "$decision" \
-    --arg r "$reason" \
-    '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: $d, permissionDecisionReason: $r}}'
+  "$PY" - "$decision" "$reason" <<'PY'
+import json, sys
+d, r = sys.argv[1], sys.argv[2]
+print(json.dumps({
+    "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": d,
+        "permissionDecisionReason": r,
+    }
+}))
+PY
   exit 0
 }
 
@@ -102,8 +139,9 @@ fi
 # If the classifier is unavailable or errors, we exit 0 (fall through to
 # the normal permission prompt) rather than block.
 # ----------------------------------------------------------------------------
-if [[ -x "$CLAUDE_PROJECT_DIR/.claude/hooks/llm_classify.py" ]]; then
-  echo "$input" | python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/llm_classify.py" || exit 0
+CLASSIFIER="$CLAUDE_PROJECT_DIR/.claude/hooks/llm_classify.py"
+if [[ -f "$CLASSIFIER" ]]; then
+  echo "$input" | "$PY" "$CLASSIFIER" || exit 0
 else
   exit 0
 fi
