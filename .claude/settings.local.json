@@ -11,7 +11,10 @@
       "Bash(npx playwright *)",
       "Bash(npm test *)",
       "Bash(npx vitest *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"---exit:$?---\")",
+      "Bash(npm audit *)"
     ]
   },
   "hooks": {

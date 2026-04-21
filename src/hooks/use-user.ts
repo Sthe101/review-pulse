@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types/database";
@@ -11,16 +12,19 @@ export type UseUserResult = {
   isLoading: boolean;
   error: Error | null;
   signOut: () => Promise<void>;
-  refresh: () => Promise<void>;
+  refetch: () => Promise<void>;
 };
 
+const profileCache = new Map<string, Profile>();
+
 export function useUser(): UseUserResult {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { bypassCache?: boolean }) => {
     setIsLoading(true);
     setError(null);
     try {
@@ -36,6 +40,14 @@ export function useUser(): UseUserResult {
         return;
       }
 
+      if (!opts?.bypassCache) {
+        const cached = profileCache.get(nextUser.id);
+        if (cached) {
+          setProfile(cached);
+          return;
+        }
+      }
+
       const { data: profileData, error: profileErr } = (await supabase
         .from("profiles")
         .select("*")
@@ -47,6 +59,7 @@ export function useUser(): UseUserResult {
 
       if (profileErr) throw new Error(profileErr.message);
       setProfile(profileData);
+      if (profileData) profileCache.set(nextUser.id, profileData);
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
     } finally {
@@ -61,9 +74,13 @@ export function useUser(): UseUserResult {
   const signOut = useCallback(async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    profileCache.clear();
     setUser(null);
     setProfile(null);
-  }, []);
+    router.push("/");
+  }, [router]);
 
-  return { user, profile, isLoading, error, signOut, refresh: load };
+  const refetch = useCallback(() => load({ bypassCache: true }), [load]);
+
+  return { user, profile, isLoading, error, signOut, refetch };
 }
