@@ -14,7 +14,20 @@
       "Bash(npx tsc *)",
       "Bash(git check-ignore *)",
       "Bash(echo \"---exit:$?---\")",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "Bash(awk END{print NR} *)",
+      "Bash(awk 'END{print NR}' /c/Users/sthembiso.sibisi/Desktop/review-pulse/review-pulse/design-reference.jsx)",
+      "Bash(tee /tmp/wc.txt)",
+      "Bash(tee /tmp/tsc.log)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(tasklist)",
+      "Bash(tasklist /FI \"IMAGENAME eq node.exe\" /FO CSV)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, StartTime | Format-Table -AutoSize\")",
+      "Bash(grep -q \"passed\\\\|failed\" \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bnfbfeidh.output\")",
+      "Bash(grep -q \"Test Files\\\\|passed\\\\|failed\" \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bbjinah3h.output\")",
+      "Bash(grep -qE \"passed|failed|Tests \" \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bcks7195w.output\")",
+      "Bash(grep -qE \"[0-9]+ passed \\\\\\([0-9]|[0-9]+ failed\" \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bvb5iuhwb.output\")",
+      "Bash(grep -qE \"Compiled|error|Error:\" \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\boa7b106a.output\")"
     ]
   },
   "hooks": {
