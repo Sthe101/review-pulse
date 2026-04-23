@@ -42,7 +42,7 @@ describe("GET /callback", () => {
       error: null,
     });
     maybeSingleMock.mockResolvedValue({
-      data: { onboarding_completed: true },
+      data: { onboarding_checklist: { survey: true } },
       error: null,
     });
 
@@ -56,14 +56,14 @@ describe("GET /callback", () => {
     expect(new URL(location!).pathname).toBe("/dashboard");
   });
 
-  it("routes new users (onboarding_completed=false) to /onboarding", async () => {
+  it("routes new users (survey not completed) to /onboarding", async () => {
     exchangeCodeMock.mockResolvedValue({ data: {}, error: null });
     getUserMock.mockResolvedValue({
       data: { user: { id: "u_2" } },
       error: null,
     });
     maybeSingleMock.mockResolvedValue({
-      data: { onboarding_completed: false },
+      data: { onboarding_checklist: { survey: false } },
       error: null,
     });
 

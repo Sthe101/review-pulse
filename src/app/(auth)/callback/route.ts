@@ -37,13 +37,13 @@ export async function GET(request: NextRequest) {
 
   const { data: profile } = (await supabase
     .from("profiles")
-    .select("onboarding_completed")
+    .select("onboarding_checklist")
     .eq("id", user.id)
     .maybeSingle()) as {
-    data: { onboarding_completed: boolean } | null;
+    data: { onboarding_checklist: { survey?: boolean } | null } | null;
   };
 
-  const destination = profile?.onboarding_completed
+  const destination = profile?.onboarding_checklist?.survey
     ? "/dashboard"
     : "/onboarding";
 

@@ -243,9 +243,9 @@ test.describe("onboarding page", () => {
     await page.waitForURL(/\/dashboard|next=%2Fdashboard/, { timeout: 10_000 });
 
     expect(captured.length).toBeGreaterThanOrEqual(1);
-    const last = captured[captured.length - 1]!;
-    expect(last.payload.onboarding_completed).toBe(true);
-    const data = last.payload.onboarding_data as Record<string, unknown>;
+    const dataPatch = captured.find((c) => c.payload.onboarding_data);
+    expect(dataPatch).toBeDefined();
+    const data = dataPatch!.payload.onboarding_data as Record<string, unknown>;
     expect(data.role).toBe("owner");
     expect(data.industry).toBe("ecommerce");
     expect(data.sources).toEqual(["google"]);

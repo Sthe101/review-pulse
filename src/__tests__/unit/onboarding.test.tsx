@@ -16,6 +16,22 @@ vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: { getUser: getUserMock },
     from: (table: string) => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: {
+              onboarding_checklist: {
+                account: true,
+                survey: false,
+                firstAnalysis: false,
+                firstProject: false,
+                firstExport: false,
+              },
+            },
+            error: null,
+          }),
+        }),
+      }),
       update: (v: unknown) => {
         updateMock(v);
         return { eq: (col: string, val: string) => eqMock(col, val) };
@@ -161,10 +177,9 @@ describe("OnboardingPage", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /skip/i }));
     });
-    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1));
-    expect(updateMock).toHaveBeenCalledWith({
+    await waitFor(() => expect(updateMock).toHaveBeenCalled());
+    expect(updateMock.mock.calls[0]?.[0]).toEqual({
       onboarding_data: { skipped: true },
-      onboarding_completed: true,
     });
     await waitFor(() => expect(pushMock).toHaveBeenCalledWith("/dashboard"));
   });

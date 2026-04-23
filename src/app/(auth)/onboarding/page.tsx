@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { createDemoProject } from "@/lib/onboarding/create-demo-project";
+import { updateChecklistItem } from "@/lib/onboarding/update-checklist";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon";
@@ -190,19 +191,21 @@ export default function OnboardingPage() {
     const { error } = await (supabase.from("profiles") as unknown as {
       update: (v: {
         onboarding_data: Record<string, unknown>;
-        onboarding_completed: boolean;
       }) => {
         eq: (col: string, val: string) => Promise<{ error: { message: string } | null }>;
       };
     })
       .update({
         onboarding_data: payload,
-        onboarding_completed: true,
       })
       .eq("id", userId);
     if (error) {
       toast.error("Couldn't save. Please try again.");
       return false;
+    }
+    const checklistResult = await updateChecklistItem(userId, "survey", true);
+    if (checklistResult.error) {
+      console.warn("Failed to mark survey complete:", checklistResult.error);
     }
     return true;
   }
