@@ -5,6 +5,7 @@ const pushMock = vi.hoisted(() => vi.fn());
 const getUserMock = vi.hoisted(() => vi.fn());
 const updateMock = vi.hoisted(() => vi.fn());
 const eqMock = vi.hoisted(() => vi.fn());
+const insertMock = vi.hoisted(() => vi.fn());
 const toastErrorMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
@@ -14,10 +15,24 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: { getUser: getUserMock },
-    from: () => ({
+    from: (table: string) => ({
       update: (v: unknown) => {
         updateMock(v);
         return { eq: (col: string, val: string) => eqMock(col, val) };
+      },
+      insert: (v: unknown) => {
+        insertMock(table, v);
+        const chain: Record<string, unknown> = {
+          select: () => ({
+            single: async () => ({
+              data: { id: "demo_proj_1" },
+              error: null,
+            }),
+          }),
+          then: (resolve: (value: { error: null }) => unknown) =>
+            resolve({ error: null }),
+        };
+        return chain;
       },
     }),
   }),
@@ -69,6 +84,7 @@ describe("OnboardingPage", () => {
     getUserMock.mockReset();
     updateMock.mockReset();
     eqMock.mockReset();
+    insertMock.mockReset();
     toastErrorMock.mockReset();
   });
 

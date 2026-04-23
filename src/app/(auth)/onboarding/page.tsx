@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { createDemoProject } from "@/lib/onboarding/create-demo-project";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon";
@@ -206,6 +207,18 @@ export default function OnboardingPage() {
     return true;
   }
 
+  async function seedDemo(industryId: string | null, skipped: boolean) {
+    if (!userId) return;
+    const { error } = await createDemoProject({
+      userId,
+      industryId,
+      skipped,
+    });
+    if (error) {
+      console.warn("Demo project seeding failed:", error);
+    }
+  }
+
   async function handleComplete() {
     setSaving(true);
     const ok = await persist({
@@ -214,15 +227,19 @@ export default function OnboardingPage() {
       sources: data.sources,
       goal: data.goal,
     });
-    if (ok) router.push("/dashboard");
-    else setSaving(false);
+    if (ok) {
+      await seedDemo(data.industry, false);
+      router.push("/dashboard");
+    } else setSaving(false);
   }
 
   async function handleSkip() {
     setSaving(true);
     const ok = await persist({ skipped: true });
-    if (ok) router.push("/dashboard");
-    else setSaving(false);
+    if (ok) {
+      await seedDemo(null, true);
+      router.push("/dashboard");
+    } else setSaving(false);
   }
 
   function handleNext() {
