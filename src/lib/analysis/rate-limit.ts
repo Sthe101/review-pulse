@@ -14,14 +14,18 @@ export interface RateLimitResult {
   remaining: number;
 }
 
-export function checkRateLimit(key: string): RateLimitResult {
+export function checkRateLimit(
+  key: string,
+  max: number = RATE_LIMIT_MAX,
+  windowMs: number = RATE_LIMIT_WINDOW_MS,
+): RateLimitResult {
   const now = Date.now();
   const b = buckets.get(key);
   if (!b || now >= b.resetAt) {
-    buckets.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-    return { ok: true, retryAfterSec: 0, remaining: RATE_LIMIT_MAX - 1 };
+    buckets.set(key, { count: 1, resetAt: now + windowMs });
+    return { ok: true, retryAfterSec: 0, remaining: max - 1 };
   }
-  if (b.count >= RATE_LIMIT_MAX) {
+  if (b.count >= max) {
     return {
       ok: false,
       retryAfterSec: Math.ceil((b.resetAt - now) / 1000),
@@ -29,7 +33,7 @@ export function checkRateLimit(key: string): RateLimitResult {
     };
   }
   b.count++;
-  return { ok: true, retryAfterSec: 0, remaining: RATE_LIMIT_MAX - b.count };
+  return { ok: true, retryAfterSec: 0, remaining: max - b.count };
 }
 
 export function __resetRateLimit(): void {
