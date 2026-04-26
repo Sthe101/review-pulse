@@ -3,9 +3,18 @@ import { z } from "zod";
 export const SeveritySchema = z.enum(["low", "medium", "high"]);
 export const PrioritySchema = z.enum(["low", "medium", "high"]);
 
+export const ReviewInputSchema = z.object({
+  content: z.string().min(1).max(10000),
+  rating: z.number().int().min(1).max(5).nullable().optional(),
+  source: z.string().min(1).max(100).nullable().optional(),
+  author: z.string().min(1).max(200).nullable().optional(),
+  review_date: z.string().min(1).nullable().optional(),
+});
+
 export const AnalyzeRequestSchema = z.object({
   project_id: z.string().uuid(),
   review_ids: z.array(z.string().uuid()).min(1).max(500).optional(),
+  reviews: z.array(ReviewInputSchema).min(1).max(500).optional(),
 });
 
 export const SentimentBreakdownSchema = z.object({
