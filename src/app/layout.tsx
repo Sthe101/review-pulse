@@ -3,7 +3,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import "./globals.css";
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

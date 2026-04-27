@@ -4,7 +4,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { DonutChart } from "@/components/ui/donut-chart";
 import { FAQ, type FaqItem } from "@/components/marketing/faq";
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
 const PAGE_TITLE = "ReviewPulse — Turn Customer Reviews Into Your Unfair Advantage";
 const PAGE_DESC =

@@ -47,3 +47,31 @@ test.describe("Privacy policy page", () => {
     expect(new URL(page.url()).pathname).toBe("/");
   });
 });
+
+test.describe("Terms of service page", () => {
+  test("/terms loads with 'Terms of Service' heading", async ({ page }) => {
+    const response = await page.goto("/terms");
+    expect(response?.status()).toBe(200);
+    await expect(
+      page.getByRole("heading", { level: 1, name: /^terms of service$/i }),
+    ).toBeVisible();
+  });
+
+  test("all 7 sections visible", async ({ page }) => {
+    await page.goto("/terms");
+
+    const headings: RegExp[] = [
+      /1\. Service Description/i,
+      /2\. Accounts & Plans/i,
+      /3\. Acceptable Use/i,
+      /4\. Data Ownership/i,
+      /5\. Payment & Refunds/i,
+      /6\. Liability/i,
+      /7\. Changes to These Terms/i,
+    ];
+
+    for (const re of headings) {
+      await expect(page.getByRole("heading", { level: 2, name: re })).toBeVisible();
+    }
+  });
+});
