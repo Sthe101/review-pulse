@@ -218,7 +218,36 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      check_rate_limit: {
+        Args: { p_key: string; p_max: number; p_window_ms: number };
+        Returns: {
+          ok: boolean;
+          remaining?: number;
+          retry_after_sec?: number;
+        };
+      };
+      consume_review_quota: {
+        Args: {
+          p_review_count: number;
+          p_max_reviews_per_month: number;
+          p_max_analyses_per_month: number;
+          p_enforce_analyses_count: boolean;
+        };
+        Returns: {
+          ok: boolean;
+          code?: string;
+          limit?: number;
+          used?: number;
+          reviews_used_after?: number;
+          plan?: Plan;
+        };
+      };
+      refund_review_quota: {
+        Args: { p_review_count: number };
+        Returns: { ok: boolean; code?: string };
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

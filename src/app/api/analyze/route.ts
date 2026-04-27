@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
-  const rl = checkRateLimit(`analyze:${user.id}`);
+  const rl = await checkRateLimit(supabase, `analyze:${user.id}`);
   if (!rl.ok) {
     return NextResponse.json(
       { error: "Too many requests. Please wait and try again." },

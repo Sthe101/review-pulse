@@ -3,12 +3,18 @@ import { z } from "zod";
 export const SeveritySchema = z.enum(["low", "medium", "high"]);
 export const PrioritySchema = z.enum(["low", "medium", "high"]);
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 export const ReviewInputSchema = z.object({
   content: z.string().min(1).max(10000),
   rating: z.number().int().min(1).max(5).nullable().optional(),
   source: z.string().min(1).max(100).nullable().optional(),
   author: z.string().min(1).max(200).nullable().optional(),
-  review_date: z.string().min(1).nullable().optional(),
+  review_date: z
+    .string()
+    .regex(ISO_DATE, "review_date must be ISO YYYY-MM-DD")
+    .nullable()
+    .optional(),
 });
 
 export const AnalyzeRequestSchema = z.object({

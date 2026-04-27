@@ -10,14 +10,19 @@ export interface ReviewForPrompt {
   source: string | null;
 }
 
+function escapeForXmlBlock(s: string): string {
+  return s.replace(/<\/reviews>/gi, "<\\/reviews>");
+}
+
 export function formatReviewsForPrompt(reviews: ReviewForPrompt[]): string {
-  return reviews
+  const inner = reviews
     .map((r, i) => {
       const rating = r.rating != null ? `${r.rating}★` : "no rating";
       const source = r.source ?? "unknown source";
-      return `Review ${i + 1} [${source}, ${rating}]:\n${r.content}`;
+      return `Review ${i + 1} [${source}, ${rating}]:\n${escapeForXmlBlock(r.content)}`;
     })
     .join("\n\n");
+  return `<reviews>\n${inner}\n</reviews>`;
 }
 
 function stripCodeFences(raw: string): string {

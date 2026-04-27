@@ -18,6 +18,15 @@ export interface RunAnalysisArgs {
   reviews: ReviewForPrompt[];
 }
 
+interface ConsumeQuotaResult {
+  ok: boolean;
+  code?: string;
+  limit?: number;
+  used?: number;
+  reviews_used_after?: number;
+  plan?: Plan;
+}
+
 function deriveReviewSentiment(rating: number | null): {
   sentiment: Sentiment | null;
   sentiment_score: number | null;
@@ -30,19 +39,24 @@ function deriveReviewSentiment(rating: number | null): {
   return { sentiment: "negative", sentiment_score: -0.9 };
 }
 
-function startOfMonthIso(now = new Date()): string {
-  const d = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0),
-  );
-  return d.toISOString();
+async function refundQuota(
+  supabase: SupabaseClient<Database>,
+  reviewCount: number,
+): Promise<void> {
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: unknown }>;
+  await rpc("refund_review_quota", {
+    p_review_count: reviewCount,
+  });
 }
 
-export async function runAnalysis(
-  args: RunAnalysisArgs,
-): Promise<RunAnalysisResult> {
-  const { supabase, anthropic, userId, projectId, reviews } = args;
-
-  const profileRes = (await (
+export async function loadPlanForUser(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<Plan | null> {
+  const res = (await (
     supabase.from("profiles") as unknown as {
       select: (cols: string) => {
         eq: (
@@ -50,29 +64,32 @@ export async function runAnalysis(
           val: string,
         ) => {
           maybeSingle: () => Promise<{
-            data: {
-              id: string;
-              plan: Plan;
-              reviews_used_this_month: number;
-            } | null;
+            data: { plan: Plan } | null;
             error: unknown;
           }>;
         };
       };
     }
   )
-    .select("id, plan, reviews_used_this_month")
+    .select("plan")
     .eq("id", userId)
     .maybeSingle()) as {
-    data: { id: string; plan: Plan; reviews_used_this_month: number } | null;
+    data: { plan: Plan } | null;
     error: unknown;
   };
+  return res.data?.plan ?? null;
+}
 
-  const profile = profileRes.data;
-  if (!profile) {
+export async function runAnalysis(
+  args: RunAnalysisArgs,
+): Promise<RunAnalysisResult> {
+  const { supabase, anthropic, userId, projectId, reviews } = args;
+
+  const plan = await loadPlanForUser(supabase, userId);
+  if (!plan) {
     return { ok: false, status: 404, error: "Profile not found." };
   }
-  const limits = PLAN_LIMITS[profile.plan];
+  const limits = PLAN_LIMITS[plan];
 
   if (reviews.length > limits.maxReviewsPerAnalysis) {
     return {
@@ -81,53 +98,49 @@ export async function runAnalysis(
       error: `Your plan allows up to ${limits.maxReviewsPerAnalysis} reviews per analysis. Upgrade to analyze more.`,
     };
   }
-  if (
-    profile.reviews_used_this_month + reviews.length >
-    limits.reviewsPerMonth
-  ) {
+
+  const rpc = supabase.rpc as unknown as (
+    fn: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: ConsumeQuotaResult | null; error: unknown }>;
+  const consumeRes = await rpc("consume_review_quota", {
+    p_review_count: reviews.length,
+    p_max_reviews_per_month: limits.reviewsPerMonth,
+    p_max_analyses_per_month: limits.analysesPerMonth,
+    p_enforce_analyses_count: plan === "free",
+  });
+
+  if (consumeRes.error || !consumeRes.data) {
     return {
       ok: false,
-      status: 403,
-      error: `Monthly review quota reached (${limits.reviewsPerMonth}). Upgrade for more.`,
+      status: 500,
+      error: "Could not check usage. Please try again.",
     };
   }
-
-  if (profile.plan === "free") {
-    const countRes = (await (
-      supabase.from("analyses") as unknown as {
-        select: (
-          cols: string,
-          opts: { count: "exact"; head: true },
-        ) => {
-          eq: (
-            col: string,
-            val: string,
-          ) => {
-            gte: (
-              col: string,
-              val: string,
-            ) => Promise<{ count: number | null; error: unknown }>;
-          };
-        };
-      }
-    )
-      .select("id, project:projects!inner(user_id)", {
-        count: "exact",
-        head: true,
-      })
-      .eq("project.user_id", userId)
-      .gte("created_at", startOfMonthIso())) as {
-      count: number | null;
-      error: unknown;
-    };
-
-    if ((countRes.count ?? 0) >= limits.analysesPerMonth) {
+  if (!consumeRes.data.ok) {
+    const code = consumeRes.data.code;
+    if (code === "monthly_review_quota") {
+      return {
+        ok: false,
+        status: 403,
+        error: `Monthly review quota reached (${limits.reviewsPerMonth}). Upgrade for more.`,
+      };
+    }
+    if (code === "analyses_quota") {
       return {
         ok: false,
         status: 403,
         error: `Free plan is limited to ${limits.analysesPerMonth} analyses per month. Upgrade for more.`,
       };
     }
+    if (code === "profile_not_found") {
+      return { ok: false, status: 404, error: "Profile not found." };
+    }
+    return {
+      ok: false,
+      status: 403,
+      error: "Usage limit reached. Upgrade for more.",
+    };
   }
 
   let analysis: AnalysisResponse;
@@ -138,6 +151,7 @@ export async function runAnalysis(
       client: anthropic,
     });
   } catch {
+    await refundQuota(supabase, reviews.length);
     return {
       ok: false,
       status: 500,
@@ -182,6 +196,7 @@ export async function runAnalysis(
   };
 
   if (insertRes.error || !insertRes.data) {
+    await refundQuota(supabase, reviews.length);
     return {
       ok: false,
       status: 500,
@@ -205,19 +220,6 @@ export async function runAnalysis(
         .eq("id", r.id);
     }),
   );
-
-  await (
-    supabase.from("profiles") as unknown as {
-      update: (v: unknown) => {
-        eq: (col: string, val: string) => Promise<{ error: unknown }>;
-      };
-    }
-  )
-    .update({
-      reviews_used_this_month:
-        profile.reviews_used_this_month + reviews.length,
-    })
-    .eq("id", userId);
 
   return { ok: true, analysis_id, analysis };
 }

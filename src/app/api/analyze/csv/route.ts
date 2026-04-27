@@ -7,8 +7,9 @@ import {
   type ReviewInputSchema,
 } from "@/lib/analysis/schema";
 import { checkRateLimit } from "@/lib/analysis/rate-limit";
-import { runAnalysis } from "@/lib/analysis/run";
+import { runAnalysis, loadPlanForUser } from "@/lib/analysis/run";
 import { type ReviewForPrompt } from "@/lib/analysis/claude";
+import { PLAN_LIMITS } from "@/lib/analysis/plan";
 import type { z } from "zod";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
-  const rl = checkRateLimit(`analyze:${user.id}`);
+  const rl = await checkRateLimit(supabase, `analyze:${user.id}`);
   if (!rl.ok) {
     return NextResponse.json(
       { error: "Too many requests. Please wait and try again." },
@@ -216,6 +217,20 @@ export async function POST(req: NextRequest) {
 
   if (!projectRes.data) {
     return NextResponse.json({ error: "Project not found." }, { status: 404 });
+  }
+
+  const plan = await loadPlanForUser(supabase, user.id);
+  if (!plan) {
+    return NextResponse.json({ error: "Profile not found." }, { status: 404 });
+  }
+  const limits = PLAN_LIMITS[plan];
+  if (validReviews.length > limits.maxReviewsPerAnalysis) {
+    return NextResponse.json(
+      {
+        error: `Your plan allows up to ${limits.maxReviewsPerAnalysis} reviews per analysis. Trim the CSV or upgrade.`,
+      },
+      { status: 403 },
+    );
   }
 
   const insertRows = validReviews.map((r) => ({

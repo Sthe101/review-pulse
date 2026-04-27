@@ -47,7 +47,6 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import { POST } from "@/app/api/analyze/route";
-import { __resetRateLimit } from "@/lib/analysis/rate-limit";
 
 const VALID_PROJECT_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -160,11 +159,80 @@ function makeSupabase(scenario: Scenario) {
     throw new Error(`unexpected table: ${table}`);
   };
 
+  let rateLimitCalls = 0;
+
+  const rpc = vi.fn(
+    async (
+      fn: string,
+      params: Record<string, unknown>,
+    ): Promise<{ data: unknown; error: unknown }> => {
+      if (fn === "check_rate_limit") {
+        rateLimitCalls++;
+        const max = (params.p_max as number) ?? 10;
+        if (rateLimitCalls > max) {
+          return {
+            data: { ok: false, retry_after_sec: 30 },
+            error: null,
+          };
+        }
+        return {
+          data: { ok: true, remaining: max - rateLimitCalls },
+          error: null,
+        };
+      }
+      if (fn === "consume_review_quota") {
+        const used = scenario.profile?.reviews_used_this_month ?? 0;
+        const n = params.p_review_count as number;
+        const maxMonth = params.p_max_reviews_per_month as number;
+        const maxAnalyses = params.p_max_analyses_per_month as number;
+        const enforce = params.p_enforce_analyses_count as boolean;
+        if (used + n > maxMonth) {
+          return {
+            data: {
+              ok: false,
+              code: "monthly_review_quota",
+              limit: maxMonth,
+              used,
+            },
+            error: null,
+          };
+        }
+        if (
+          enforce &&
+          (scenario.analysesCountThisMonth ?? 0) >= maxAnalyses
+        ) {
+          return {
+            data: {
+              ok: false,
+              code: "analyses_quota",
+              limit: maxAnalyses,
+              used: scenario.analysesCountThisMonth,
+            },
+            error: null,
+          };
+        }
+        captured.profileUpdates.push({
+          id: scenario.profile?.id ?? "user_1",
+          patch: { reviews_used_this_month: used + n },
+        });
+        return {
+          data: { ok: true, reviews_used_after: used + n },
+          error: null,
+        };
+      }
+      if (fn === "refund_review_quota") {
+        return { data: { ok: true }, error: null };
+      }
+      return { data: null, error: null };
+    },
+  );
+
   const client = {
     auth: {
       getUser: vi.fn(async () => ({ data: { user }, error: null })),
     },
     from: vi.fn((t: string) => fromImpl(t)),
+    rpc,
   };
 
   return { client, captured };
@@ -221,7 +289,6 @@ function makeReviews(n: number) {
 }
 
 beforeEach(() => {
-  __resetRateLimit();
   anthropicState.mockCreate = vi
     .fn()
     .mockResolvedValue(anthropicJson(sampleAnalysisResponse));
@@ -312,7 +379,6 @@ describe("POST /api/analyze", () => {
     anthropicState.mockCreate = vi
       .fn()
       .mockResolvedValue(anthropicJson(sampleAnalysisResponse));
-    __resetRateLimit();
 
     const proCtx = makeSupabase({
       profile: baseProfile("pro", 0),

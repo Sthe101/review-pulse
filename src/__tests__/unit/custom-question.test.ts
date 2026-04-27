@@ -46,7 +46,6 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import { POST } from "@/app/api/analyze/question/route";
-import { __resetRateLimit } from "@/lib/analysis/rate-limit";
 
 const VALID_ANALYSIS_UUID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -120,11 +119,37 @@ function makeSupabase(scenario: Scenario) {
     throw new Error(`unexpected table: ${table}`);
   };
 
+  let rateLimitCalls = 0;
+
+  const rpc = vi.fn(
+    async (
+      fn: string,
+      params: Record<string, unknown>,
+    ): Promise<{ data: unknown; error: unknown }> => {
+      if (fn === "check_rate_limit") {
+        rateLimitCalls++;
+        const max = (params.p_max as number) ?? 5;
+        if (rateLimitCalls > max) {
+          return {
+            data: { ok: false, retry_after_sec: 30 },
+            error: null,
+          };
+        }
+        return {
+          data: { ok: true, remaining: max - rateLimitCalls },
+          error: null,
+        };
+      }
+      return { data: null, error: null };
+    },
+  );
+
   const client = {
     auth: {
       getUser: vi.fn(async () => ({ data: { user }, error: null })),
     },
     from: vi.fn((t: string) => fromImpl(t)),
+    rpc,
   };
 
   return { client };
@@ -169,7 +194,6 @@ function happyScenario(): Scenario {
 }
 
 beforeEach(() => {
-  __resetRateLimit();
   anthropicState.mockCreate = vi
     .fn()
     .mockResolvedValue(
