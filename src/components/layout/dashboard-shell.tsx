@@ -16,6 +16,7 @@ type DashboardShellProps = {
   activeId?: string;
   items?: NavItem[];
   onNavigate?: (id: string) => void;
+  onSignOut?: () => void;
   user?: { name: string; email: string; initials?: string };
   usage?: { used: number; limit: number; plan: string };
   children?: ReactNode;
@@ -35,6 +36,7 @@ export function DashboardShell({
   activeId,
   items = DEFAULT_ITEMS,
   onNavigate,
+  onSignOut,
   user,
   usage,
   children,
@@ -105,6 +107,9 @@ export function DashboardShell({
       </div>
 
       <aside
+        data-testid="sidebar"
+        data-collapsed={collapsed ? "true" : "false"}
+        data-mobile-open={mobileOpen ? "true" : "false"}
         className={`sidebar ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}
       >
         <div
@@ -140,6 +145,8 @@ export function DashboardShell({
               <button
                 key={item.id}
                 onClick={() => handleNav(item.id)}
+                data-nav-id={item.id}
+                data-active={active ? "true" : "false"}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -329,6 +336,7 @@ export function DashboardShell({
 
       {userMenuOpen && user && (
         <div
+          data-testid="user-dropdown"
           className="card"
           style={{
             position: "fixed",
@@ -365,6 +373,7 @@ export function DashboardShell({
               fontSize: 13,
               color: "var(--tx2)",
               cursor: "pointer",
+              borderBottom: "1px solid var(--bd)",
               width: "100%",
               textAlign: "left",
               background: "transparent",
@@ -373,6 +382,29 @@ export function DashboardShell({
             }}
           >
             Billing
+          </button>
+          <button
+            onClick={() => {
+              setUserMenuOpen(false);
+              onSignOut?.();
+            }}
+            style={{
+              padding: "10px 16px",
+              fontSize: 13,
+              color: "var(--neg)",
+              cursor: "pointer",
+              width: "100%",
+              textAlign: "left",
+              background: "transparent",
+              border: "none",
+              fontFamily: "inherit",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <Icon name="out" size={14} color="var(--neg)" />
+            <span>Sign out</span>
           </button>
         </div>
       )}
