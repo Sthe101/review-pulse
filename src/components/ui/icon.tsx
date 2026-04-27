@@ -55,6 +55,7 @@ export function Icon({ name, size = 20, color = "currentColor", className, ...re
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
     className,
+    "data-icon": name,
     ...rest,
   };
 

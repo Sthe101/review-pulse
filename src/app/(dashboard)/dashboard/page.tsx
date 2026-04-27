@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { PasteAnalyze } from "@/components/dashboard/paste-analyze";
 import { RecentProjects } from "@/components/dashboard/recent-projects";
+import { KeyInsights } from "@/components/dashboard/key-insights";
 
 export const metadata = {
   title: "Dashboard",
@@ -29,6 +30,7 @@ export default async function DashboardPage() {
       </div>
       <StatCards />
       <PasteAnalyze userId={user.id} />
+      <KeyInsights />
       <RecentProjects />
     </div>
   );
