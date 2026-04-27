@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { NotificationBell } from "./notification-bell";
 import { useThemeStore } from "@/stores/theme-store";
 
 export type NavItem = {
@@ -175,6 +176,15 @@ export function DashboardShell({
             );
           })}
         </nav>
+
+        <div
+          style={{
+            borderTop: "1px solid var(--bd)",
+            padding: collapsed ? "8px 4px" : "8px 8px",
+          }}
+        >
+          <NotificationBell collapsed={collapsed} />
+        </div>
 
         <div
           style={{
