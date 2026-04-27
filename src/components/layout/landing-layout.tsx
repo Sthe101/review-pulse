@@ -14,6 +14,9 @@ export function LandingLayout({ children }: LandingLayoutProps) {
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <a href="#main" className="skip-link">
+        Skip to main content
+      </a>
       <nav
         className="landing-nav"
         style={{
@@ -48,7 +51,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
           className="nav-links"
           style={{ display: "flex", gap: 24, alignItems: "center", fontSize: 14 }}
         >
-          <Link href="/#features" style={{ color: "var(--tx2)", textDecoration: "none" }}>
+          <Link href="/#how-it-works" style={{ color: "var(--tx2)", textDecoration: "none" }}>
             Features
           </Link>
           <Link href="/#pricing" style={{ color: "var(--tx2)", textDecoration: "none" }}>
@@ -109,7 +112,7 @@ export function LandingLayout({ children }: LandingLayoutProps) {
         </div>
       </nav>
 
-      <main style={{ flex: 1 }}>{children}</main>
+      <main id="main" style={{ flex: 1 }}>{children}</main>
 
       <footer
         style={{
@@ -137,9 +140,9 @@ export function LandingLayout({ children }: LandingLayoutProps) {
           </div>
           {(
             [
-              ["Product", [["Features", "/#features"], ["Pricing", "/#pricing"]]],
+              ["Product", [["Features", "/#how-it-works"], ["Pricing", "/#pricing"]]],
               ["Company", [["About", "/about"], ["Blog", "/blog"]]],
-              ["Legal", [["Privacy", "/privacy"], ["Terms", "/terms"]]],
+              ["Legal", [["Privacy Policy", "/privacy"], ["Terms of Service", "/terms"]]],
             ] as const
           ).map(([title, links]) => (
             <div key={title}>
