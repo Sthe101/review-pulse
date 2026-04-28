@@ -36,7 +36,18 @@
       "PowerShell(Get-Item *)",
       "Bash(curl -s http://localhost:3000/sitemap.xml)",
       "Bash(command -v supabase)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bkp6g38ge.exit\" ])",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bvr0v7rf8.exit\" ])",
+      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bvr0v7rf8.output\")",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b3hra8zm3.exit\" ])",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bkqq9f4ci.exit\" ])",
+      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bkqq9f4ci.output\")",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\brtxlwr32.exit\" ])",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b8p1vxzn8.exit\" ])",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bet0o0scz.exit\" ])",
+      "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b4digpkg5.exit\" ])",
+      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b4digpkg5.output\")"
     ]
   },
   "hooks": {

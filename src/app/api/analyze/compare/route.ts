@@ -243,11 +243,12 @@ export async function POST(req: NextRequest) {
     code?: string;
     limit?: number;
   }
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: ConsumeQuotaResult | null; error: unknown }>;
-  const consumeRes = await rpc("consume_review_quota", {
+  const consumeRes = await (
+    supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ data: ConsumeQuotaResult | null; error: unknown }>
+  ).call(supabase, "consume_review_quota", {
     p_review_count: competitorForPrompt.length,
     p_max_reviews_per_month: limits.reviewsPerMonth,
     p_max_analyses_per_month: limits.analysesPerMonth,
@@ -275,11 +276,12 @@ export async function POST(req: NextRequest) {
   }
 
   const refundQuota = async (): Promise<void> => {
-    const refundRpc = supabase.rpc as unknown as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: unknown; error: unknown }>;
-    await refundRpc("refund_review_quota", {
+    await (
+      supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: unknown }>
+    ).call(supabase, "refund_review_quota", {
       p_review_count: competitorForPrompt.length,
     });
   };

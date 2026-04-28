@@ -43,11 +43,12 @@ async function refundQuota(
   supabase: SupabaseClient<Database>,
   reviewCount: number,
 ): Promise<void> {
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: unknown; error: unknown }>;
-  await rpc("refund_review_quota", {
+  await (
+    supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: unknown }>
+  ).call(supabase, "refund_review_quota", {
     p_review_count: reviewCount,
   });
 }
@@ -99,11 +100,12 @@ export async function runAnalysis(
     };
   }
 
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: ConsumeQuotaResult | null; error: unknown }>;
-  const consumeRes = await rpc("consume_review_quota", {
+  const consumeRes = await (
+    supabase.rpc as unknown as (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ data: ConsumeQuotaResult | null; error: unknown }>
+  ).call(supabase, "consume_review_quota", {
     p_review_count: reviews.length,
     p_max_reviews_per_month: limits.reviewsPerMonth,
     p_max_analyses_per_month: limits.analysesPerMonth,

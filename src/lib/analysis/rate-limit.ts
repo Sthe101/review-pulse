@@ -51,15 +51,22 @@ export async function checkRateLimit(
   max: number = RATE_LIMIT_MAX,
   windowMs: number = RATE_LIMIT_WINDOW_MS,
 ): Promise<RateLimitResult> {
-  const rpc = supabase.rpc as unknown as (
-    fn: string,
-    args: Record<string, unknown>,
-  ) => Promise<{ data: RpcResult | null; error: unknown }>;
-  const res = await rpc("check_rate_limit", {
-    p_key: key,
-    p_max: max,
-    p_window_ms: windowMs,
-  });
+  let res: { data: RpcResult | null; error: unknown };
+  try {
+    res = await (
+      supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: RpcResult | null; error: unknown }>
+    ).call(supabase, "check_rate_limit", {
+      p_key: key,
+      p_max: max,
+      p_window_ms: windowMs,
+    });
+  } catch {
+    // RPC threw (e.g., function missing in DB) — fall back to in-memory.
+    return checkInMemory(key, max, windowMs);
+  }
 
   if (res.error || !res.data) {
     // RPC failed — fall back to in-memory so we still throttle on this isolate.

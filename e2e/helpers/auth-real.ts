@@ -152,3 +152,38 @@ export async function seedProject(
   }
   return { projectId: (data as { id: string }).id };
 }
+
+export interface SeedReviewsOptions {
+  user: RealTestUser;
+  projectId: string;
+  contents: string[];
+}
+
+/**
+ * Insert reviews under the user's auth context — same auth pattern as
+ * seedProject. Used by E2E specs that want reviews present without going
+ * through the UI paste flow (faster, and avoids hitting the live analysis
+ * endpoint).
+ */
+export async function seedReviews(
+  options: SeedReviewsOptions
+): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const userClient = createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  await userClient.auth.setSession({
+    access_token: options.user.session.access_token,
+    refresh_token: options.user.session.refresh_token,
+  });
+
+  const rows = options.contents.map((content) => ({
+    project_id: options.projectId,
+    content,
+  }));
+  const { error } = await userClient.from("reviews").insert(rows);
+  if (error) {
+    throw new Error(`seedReviews failed: ${error.message}`);
+  }
+}
