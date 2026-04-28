@@ -34,7 +34,9 @@
       "Bash(wait *)",
       "Bash(echo \"EXIT=$?\")",
       "PowerShell(Get-Item *)",
-      "Bash(curl -s http://localhost:3000/sitemap.xml)"
+      "Bash(curl -s http://localhost:3000/sitemap.xml)",
+      "Bash(command -v supabase)",
+      "Bash(npx supabase *)"
     ]
   },
   "hooks": {
