@@ -3,6 +3,11 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectDetailClient } from "@/components/projects/project-detail-client";
 import type { Industry } from "@/types/database";
+import type {
+  ActionItem,
+  ComplaintItem,
+  MentionItem,
+} from "@/lib/analysis/types";
 
 export const metadata = {
   title: "Project",
@@ -17,6 +22,23 @@ type ProjectDetail = {
   is_demo: boolean;
 };
 
+type LatestAnalysisRow = {
+  id: string;
+  summary: string | null;
+  sentiment_positive: number | null;
+  sentiment_neutral: number | null;
+  sentiment_negative: number | null;
+  sentiment_mixed: number | null;
+  overall_score: number | null;
+  complaints: unknown;
+  praises: unknown;
+  feature_requests: unknown;
+  action_items: unknown;
+  rating_distribution: unknown;
+  review_count: number;
+  created_at: string;
+};
+
 type LatestAnalysis = {
   id: string;
   summary: string | null;
@@ -25,9 +47,44 @@ type LatestAnalysis = {
   sentiment_negative: number | null;
   sentiment_mixed: number | null;
   overall_score: number | null;
+  complaints: ComplaintItem[];
+  praises: MentionItem[];
+  feature_requests: MentionItem[];
+  action_items: ActionItem[];
+  rating_distribution: Record<string, number>;
   review_count: number;
   created_at: string;
 };
+
+function parseJsonbArray<T>(raw: unknown): T[] {
+  if (Array.isArray(raw)) return raw as T[];
+  if (typeof raw === "string") {
+    try {
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? (v as T[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function parseJsonbObject(raw: unknown): Record<string, number> {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, number>;
+  }
+  if (typeof raw === "string") {
+    try {
+      const v = JSON.parse(raw);
+      return v && typeof v === "object" && !Array.isArray(v)
+        ? (v as Record<string, number>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
 
 type ReviewRow = {
   id: string;
@@ -94,7 +151,7 @@ type LatestAnalysisQuery = {
       ) => {
         limit: (n: number) => {
           maybeSingle: () => Promise<{
-            data: LatestAnalysis | null;
+            data: LatestAnalysisRow | null;
             error: unknown;
           }>;
         };
@@ -150,14 +207,35 @@ export default async function ProjectDetailPage({
     supabase.from("analyses") as unknown as LatestAnalysisQuery
   )
     .select(
-      "id, summary, sentiment_positive, sentiment_neutral, sentiment_negative, sentiment_mixed, overall_score, review_count, created_at"
+      "id, summary, sentiment_positive, sentiment_neutral, sentiment_negative, sentiment_mixed, overall_score, complaints, praises, feature_requests, action_items, rating_distribution, review_count, created_at"
     )
     .eq("project_id", id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  const latestAnalysis = latestRes.data ?? null;
+  const latestAnalysis: LatestAnalysis | null = latestRes.data
+    ? {
+        id: latestRes.data.id,
+        summary: latestRes.data.summary,
+        sentiment_positive: latestRes.data.sentiment_positive,
+        sentiment_neutral: latestRes.data.sentiment_neutral,
+        sentiment_negative: latestRes.data.sentiment_negative,
+        sentiment_mixed: latestRes.data.sentiment_mixed,
+        overall_score: latestRes.data.overall_score,
+        complaints: parseJsonbArray<ComplaintItem>(latestRes.data.complaints),
+        praises: parseJsonbArray<MentionItem>(latestRes.data.praises),
+        feature_requests: parseJsonbArray<MentionItem>(
+          latestRes.data.feature_requests
+        ),
+        action_items: parseJsonbArray<ActionItem>(latestRes.data.action_items),
+        rating_distribution: parseJsonbObject(
+          latestRes.data.rating_distribution
+        ),
+        review_count: latestRes.data.review_count,
+        created_at: latestRes.data.created_at,
+      }
+    : null;
 
   const initialTab =
     tabParam === "reviews" ||

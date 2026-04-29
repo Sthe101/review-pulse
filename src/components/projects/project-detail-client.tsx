@@ -6,7 +6,16 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SentimentBar } from "@/components/ui/sentiment-bar";
 import { AddReviewsTab, type AnalysisCompletePayload } from "./add-reviews-tab";
+import {
+  AnalysisResults,
+  type AnalysisResultsData,
+} from "@/components/analysis/analysis-results";
 import type { Industry } from "@/types/database";
+import type {
+  ActionItem,
+  ComplaintItem,
+  MentionItem,
+} from "@/lib/analysis/types";
 
 type Project = {
   id: string;
@@ -25,6 +34,11 @@ type LatestAnalysis = {
   sentiment_negative: number | null;
   sentiment_mixed: number | null;
   overall_score: number | null;
+  complaints: ComplaintItem[];
+  praises: MentionItem[];
+  feature_requests: MentionItem[];
+  action_items: ActionItem[];
+  rating_distribution: Record<string, number>;
   review_count: number;
   created_at: string;
 };
@@ -89,14 +103,20 @@ export function ProjectDetailClient({
 
   const handleAnalysisComplete = useCallback(
     (payload: AnalysisCompletePayload) => {
+      const a = payload.analysis;
       const optimistic: LatestAnalysis = {
         id: payload.analysis_id,
-        summary: payload.analysis.summary ?? null,
-        sentiment_positive: payload.analysis.sentiment?.positive ?? null,
-        sentiment_neutral: payload.analysis.sentiment?.neutral ?? null,
-        sentiment_negative: payload.analysis.sentiment?.negative ?? null,
-        sentiment_mixed: payload.analysis.sentiment?.mixed ?? null,
-        overall_score: payload.analysis.overall_score ?? null,
+        summary: a.summary ?? null,
+        sentiment_positive: a.sentiment?.positive ?? null,
+        sentiment_neutral: a.sentiment?.neutral ?? null,
+        sentiment_negative: a.sentiment?.negative ?? null,
+        sentiment_mixed: a.sentiment?.mixed ?? null,
+        overall_score: a.overall_score ?? null,
+        complaints: (a.complaints ?? []) as ComplaintItem[],
+        praises: (a.praises ?? []) as MentionItem[],
+        feature_requests: (a.feature_requests ?? []) as MentionItem[],
+        action_items: (a.action_items ?? []) as ActionItem[],
+        rating_distribution: a.rating_distribution ?? {},
         review_count: payload.reviewCount,
         created_at: new Date().toISOString(),
       };
@@ -351,31 +371,14 @@ function AnalysisTab({ analysis }: { analysis: LatestAnalysis | null }) {
   if (!analysis) {
     return (
       <Card padding={24}>
-        <p
-          data-testid="analysis-empty"
-          style={{ fontSize: 13, color: "var(--tx2)", margin: 0 }}
-        >
-          No analysis yet. Use the Add Reviews tab to import reviews and run an
-          analysis.
-        </p>
-      </Card>
-    );
-  }
-
-  return (
-    <div
-      data-testid="analysis-tab"
-      style={{ display: "flex", flexDirection: "column", gap: 16 }}
-    >
-      <Card padding={20}>
         <div
+          data-testid="analysis-empty"
           style={{
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-            marginBottom: 12,
-            flexWrap: "wrap",
-            gap: 8,
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+            gap: 6,
           }}
         >
           <h2
@@ -386,50 +389,35 @@ function AnalysisTab({ analysis }: { analysis: LatestAnalysis | null }) {
               margin: 0,
             }}
           >
-            Summary
+            No analysis yet
           </h2>
-          <span style={{ fontSize: 12, color: "var(--tx3)" }}>
-            {analysis.review_count} review
-            {analysis.review_count === 1 ? "" : "s"} analyzed
-          </span>
-        </div>
-        {analysis.summary && (
-          <p
-            data-testid="analysis-summary"
-            style={{
-              fontSize: 14,
-              color: "var(--tx2)",
-              lineHeight: 1.6,
-              margin: "0 0 16px",
-            }}
-          >
-            {analysis.summary}
+          <p style={{ fontSize: 13, color: "var(--tx2)", margin: 0 }}>
+            Use the Add Reviews tab to import reviews and run an analysis.
           </p>
-        )}
-        <SentimentBar
-          positive={analysis.sentiment_positive ?? 0}
-          neutral={analysis.sentiment_neutral ?? 0}
-          negative={
-            (analysis.sentiment_negative ?? 0) +
-            (analysis.sentiment_mixed ?? 0)
-          }
-        />
-        {typeof analysis.overall_score === "number" && (
-          <div
-            style={{
-              marginTop: 16,
-              fontSize: 13,
-              color: "var(--tx2)",
-            }}
-          >
-            Overall score:{" "}
-            <strong style={{ color: "var(--tx)" }}>
-              {analysis.overall_score}
-            </strong>
-            /100
-          </div>
-        )}
+        </div>
       </Card>
+    );
+  }
+
+  const data: AnalysisResultsData = {
+    summary: analysis.summary,
+    sentiment_positive: analysis.sentiment_positive,
+    sentiment_neutral: analysis.sentiment_neutral,
+    sentiment_negative: analysis.sentiment_negative,
+    sentiment_mixed: analysis.sentiment_mixed,
+    overall_score: analysis.overall_score,
+    complaints: analysis.complaints,
+    praises: analysis.praises,
+    feature_requests: analysis.feature_requests,
+    action_items: analysis.action_items,
+    rating_distribution: analysis.rating_distribution,
+    review_count: analysis.review_count,
+    created_at: analysis.created_at,
+  };
+
+  return (
+    <div data-testid="analysis-tab">
+      <AnalysisResults analysis={data} mode="full" />
     </div>
   );
 }

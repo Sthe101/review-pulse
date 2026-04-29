@@ -44,6 +44,19 @@ type ReviewInsertChain = {
   insert: (v: unknown) => Promise<{ error: unknown }>;
 };
 
+type AnalysisItemPayload = {
+  text: string;
+  count?: number;
+  severity?: "low" | "medium" | "high";
+  examples?: string[];
+};
+
+type ActionItemPayload = {
+  title: string;
+  description: string;
+  priority: "low" | "medium" | "high";
+};
+
 export type AnalysisCompletePayload = {
   analysis_id: string;
   analysis: {
@@ -55,6 +68,11 @@ export type AnalysisCompletePayload = {
       mixed?: number;
     };
     overall_score?: number | null;
+    complaints?: AnalysisItemPayload[];
+    praises?: AnalysisItemPayload[];
+    feature_requests?: AnalysisItemPayload[];
+    action_items?: ActionItemPayload[];
+    rating_distribution?: Record<string, number>;
   };
   reviewCount: number;
 };
