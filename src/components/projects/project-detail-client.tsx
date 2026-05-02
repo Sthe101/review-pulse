@@ -10,6 +10,7 @@ import {
   AnalysisResults,
   type AnalysisResultsData,
 } from "@/components/analysis/analysis-results";
+import { ExportCsvButton } from "@/components/analysis/export-csv-button";
 import type { Industry } from "@/types/database";
 import type {
   ActionItem,
@@ -416,7 +417,13 @@ function AnalysisTab({ analysis }: { analysis: LatestAnalysis | null }) {
   };
 
   return (
-    <div data-testid="analysis-tab">
+    <div
+      data-testid="analysis-tab"
+      style={{ display: "flex", flexDirection: "column", gap: 12 }}
+    >
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <ExportCsvButton analysisId={analysis.id} />
+      </div>
       <AnalysisResults analysis={data} mode="full" />
     </div>
   );

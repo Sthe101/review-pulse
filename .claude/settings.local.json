@@ -47,7 +47,10 @@
       "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b8p1vxzn8.exit\" ])",
       "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\bet0o0scz.exit\" ])",
       "Bash([ -f \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b4digpkg5.exit\" ])",
-      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b4digpkg5.output\")"
+      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b4digpkg5.output\")",
+      "Bash(python *)",
+      "Bash(2>/dev/null)",
+      "Bash(git mv *)"
     ]
   },
   "hooks": {
