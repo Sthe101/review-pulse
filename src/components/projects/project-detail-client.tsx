@@ -11,6 +11,7 @@ import {
   type AnalysisResultsData,
 } from "@/components/analysis/analysis-results";
 import { ExportCsvButton } from "@/components/analysis/export-csv-button";
+import { ShareButton } from "@/components/analysis/share-button";
 import type { Industry } from "@/types/database";
 import type {
   ActionItem,
@@ -421,7 +422,15 @@ function AnalysisTab({ analysis }: { analysis: LatestAnalysis | null }) {
       data-testid="analysis-tab"
       style={{ display: "flex", flexDirection: "column", gap: 12 }}
     >
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <ShareButton analysisId={analysis.id} />
         <ExportCsvButton analysisId={analysis.id} />
       </div>
       <AnalysisResults analysis={data} mode="full" />
