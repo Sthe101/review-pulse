@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   buildAnalysisCsv,
   buildCsvFilename,
+  buildPdfFilename,
   type ReviewRow,
 } from "@/lib/csv/build-analysis-csv";
 import type {
@@ -10,9 +11,14 @@ import type {
   ComplaintItem,
   MentionItem,
 } from "@/lib/analysis/types";
+import type { Plan } from "@/types/database";
+
+export const runtime = "nodejs";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const PDF_PLANS: ReadonlySet<Plan> = new Set<Plan>(["pro", "business"]);
 
 type AnalysisRow = {
   id: string;
@@ -96,7 +102,7 @@ export async function POST(
     }
 
     const format = req.nextUrl.searchParams.get("format") ?? "csv";
-    if (format !== "csv") {
+    if (format !== "csv" && format !== "pdf") {
       return NextResponse.json(
         { error: `Unsupported format: ${format}` },
         { status: 400 },
@@ -110,6 +116,38 @@ export async function POST(
     } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+    }
+
+    if (format === "pdf") {
+      const profileRes = (await (
+        supabase.from("profiles") as unknown as {
+          select: (cols: string) => {
+            eq: (
+              col: string,
+              val: string,
+            ) => {
+              maybeSingle: () => Promise<{
+                data: { plan: Plan } | null;
+                error: unknown;
+              }>;
+            };
+          };
+        }
+      )
+        .select("plan")
+        .eq("id", user.id)
+        .maybeSingle()) as { data: { plan: Plan } | null; error: unknown };
+
+      const plan: Plan = profileRes.data?.plan ?? "free";
+      if (!PDF_PLANS.has(plan)) {
+        return NextResponse.json(
+          {
+            error: "PDF export requires Pro plan",
+            upgradeUrl: "/billing",
+          },
+          { status: 403 },
+        );
+      }
     }
 
     const analysisRes = (await (
@@ -172,6 +210,51 @@ export async function POST(
       );
     }
 
+    const analysisData = {
+      summary: analysisRes.data.summary,
+      sentiment_positive: analysisRes.data.sentiment_positive,
+      sentiment_neutral: analysisRes.data.sentiment_neutral,
+      sentiment_negative: analysisRes.data.sentiment_negative,
+      sentiment_mixed: analysisRes.data.sentiment_mixed,
+      overall_score: analysisRes.data.overall_score,
+      complaints: parseJsonbArray<ComplaintItem>(analysisRes.data.complaints),
+      praises: parseJsonbArray<MentionItem>(analysisRes.data.praises),
+      feature_requests: parseJsonbArray<MentionItem>(
+        analysisRes.data.feature_requests,
+      ),
+      action_items: parseJsonbArray<ActionItem>(analysisRes.data.action_items),
+      rating_distribution: parseJsonbObject(
+        analysisRes.data.rating_distribution,
+      ),
+      review_count: analysisRes.data.review_count,
+      created_at: analysisRes.data.created_at,
+    };
+    const projectData = {
+      name: projectRes.data.name,
+      industry: projectRes.data.industry,
+      review_source: projectRes.data.review_source,
+    };
+
+    if (format === "pdf") {
+      const { renderToBuffer } = await import("@react-pdf/renderer");
+      const { AnalysisReportPdf } = await import("@/lib/pdf/analysis-report");
+      const buffer = await renderToBuffer(
+        AnalysisReportPdf({
+          project: projectData,
+          analysis: analysisData,
+        }),
+      );
+      const filename = buildPdfFilename(analysisRes.data.created_at);
+      return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Cache-Control": "no-store",
+        },
+      });
+    }
+
     const reviewsRes = (await (
       supabase.from("reviews") as unknown as {
         select: (cols: string) => {
@@ -212,30 +295,8 @@ export async function POST(
     }));
 
     const csv = buildAnalysisCsv({
-      project: {
-        name: projectRes.data.name,
-        industry: projectRes.data.industry,
-        review_source: projectRes.data.review_source,
-      },
-      analysis: {
-        summary: analysisRes.data.summary,
-        sentiment_positive: analysisRes.data.sentiment_positive,
-        sentiment_neutral: analysisRes.data.sentiment_neutral,
-        sentiment_negative: analysisRes.data.sentiment_negative,
-        sentiment_mixed: analysisRes.data.sentiment_mixed,
-        overall_score: analysisRes.data.overall_score,
-        complaints: parseJsonbArray<ComplaintItem>(analysisRes.data.complaints),
-        praises: parseJsonbArray<MentionItem>(analysisRes.data.praises),
-        feature_requests: parseJsonbArray<MentionItem>(
-          analysisRes.data.feature_requests,
-        ),
-        action_items: parseJsonbArray<ActionItem>(analysisRes.data.action_items),
-        rating_distribution: parseJsonbObject(
-          analysisRes.data.rating_distribution,
-        ),
-        review_count: analysisRes.data.review_count,
-        created_at: analysisRes.data.created_at,
-      },
+      project: projectData,
+      analysis: analysisData,
       reviews,
     });
 

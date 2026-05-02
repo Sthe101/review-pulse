@@ -214,20 +214,29 @@ export function buildAnalysisCsv(input: CsvAnalysisInput): string {
   return lines.join("\r\n") + "\r\n";
 }
 
-export function buildCsvFilename(
-  projectName: string,
-  createdAt: string,
-): string {
-  const slug =
+function dateSlug(createdAt: string): string {
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return "report";
+  return d.toISOString().slice(0, 10);
+}
+
+function projectSlug(projectName: string): string {
+  return (
     projectName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "analysis";
-  const date = (() => {
-    const d = new Date(createdAt);
-    if (Number.isNaN(d.getTime())) return "report";
-    return d.toISOString().slice(0, 10);
-  })();
-  return `reviewpulse-${slug}-${date}.csv`;
+      .slice(0, 60) || "analysis"
+  );
+}
+
+export function buildCsvFilename(
+  projectName: string,
+  createdAt: string,
+): string {
+  return `reviewpulse-${projectSlug(projectName)}-${dateSlug(createdAt)}.csv`;
+}
+
+export function buildPdfFilename(createdAt: string): string {
+  return `reviewpulse-report-${dateSlug(createdAt)}.pdf`;
 }

@@ -50,7 +50,8 @@
       "Bash(cat \"C:\\\\\\\\Users\\\\\\\\STHEMB~1.SIB\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-sthembiso-sibisi-Desktop-review-pulse-review-pulse\\\\\\\\b8d1d8d2-9924-428b-9932-b448b7188f23\\\\\\\\tasks\\\\\\\\b4digpkg5.output\")",
       "Bash(python *)",
       "Bash(2>/dev/null)",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(echo \"[exit $?]\")"
     ]
   },
   "hooks": {
