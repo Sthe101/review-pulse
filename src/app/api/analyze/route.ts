@@ -128,9 +128,10 @@ export async function POST(req: NextRequest) {
       analysis: result.analysis,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unexpected analyze failure.";
     console.error("[/api/analyze] unhandled:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unexpected error. Please try again." },
+      { status: 500 },
+    );
   }
 }

@@ -104,7 +104,7 @@ export async function POST(
     const format = req.nextUrl.searchParams.get("format") ?? "csv";
     if (format !== "csv" && format !== "pdf") {
       return NextResponse.json(
-        { error: `Unsupported format: ${format}` },
+        { error: "Unsupported format." },
         { status: 400 },
       );
     }
@@ -314,9 +314,10 @@ export async function POST(
       },
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unexpected export failure.";
     console.error("[/api/export] unhandled:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unexpected error. Please try again." },
+      { status: 500 },
+    );
   }
 }

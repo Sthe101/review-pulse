@@ -87,9 +87,10 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unexpected delete failure.";
     console.error("[/api/share/{token}] unhandled:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unexpected error. Please try again." },
+      { status: 500 },
+    );
   }
 }

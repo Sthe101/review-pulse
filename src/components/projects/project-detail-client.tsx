@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SentimentBar } from "@/components/ui/sentiment-bar";
@@ -12,6 +13,11 @@ import {
 } from "@/components/analysis/analysis-results";
 import { ExportCsvButton } from "@/components/analysis/export-csv-button";
 import { ShareButton } from "@/components/analysis/share-button";
+import { ReviewsTab, type ReviewRow } from "./reviews-tab";
+import {
+  HistoryTab,
+  type AnalysisHistoryItem,
+} from "./history-tab";
 import type { Industry } from "@/types/database";
 import type {
   ActionItem,
@@ -45,21 +51,15 @@ type LatestAnalysis = {
   created_at: string;
 };
 
-type ReviewRow = {
-  id: string;
-  content: string;
-  rating: number | null;
-  source: string | null;
-  created_at: string;
-};
-
-type Tab = "overview" | "reviews" | "add-reviews" | "analysis";
+type Tab = "overview" | "reviews" | "add-reviews" | "analysis" | "history";
 
 type Props = {
   project: Project;
   reviewCount: number;
   reviews: ReviewRow[];
   latestAnalysis: LatestAnalysis | null;
+  analyses: LatestAnalysis[];
+  analysesHistory: AnalysisHistoryItem[];
   initialTab: Tab;
 };
 
@@ -68,6 +68,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "reviews", label: "Reviews" },
   { id: "add-reviews", label: "Add Reviews" },
   { id: "analysis", label: "Analysis" },
+  { id: "history", label: "History" },
 ];
 
 export function ProjectDetailClient({
@@ -75,19 +76,31 @@ export function ProjectDetailClient({
   reviewCount,
   reviews,
   latestAnalysis,
+  analyses,
+  analysesHistory,
   initialTab,
 }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
-  const [analysis, setAnalysis] = useState<LatestAnalysis | null>(
-    latestAnalysis
-  );
+  // The selected analysis (defaults to the latest). When a user picks an
+  // older one in History, we swap to it without re-fetching.
+  const [selectedAnalysis, setSelectedAnalysis] =
+    useState<LatestAnalysis | null>(latestAnalysis);
 
-  // When the server prop changes (e.g., after router.refresh() resolves),
-  // adopt it so we don't keep stale optimistic state forever.
+  // When the server props change (e.g., after router.refresh() resolves),
+  // adopt them so we don't keep stale optimistic state forever. If the user
+  // had picked a non-latest analysis, keep that selection if it still exists.
   useEffect(() => {
-    setAnalysis(latestAnalysis);
-  }, [latestAnalysis]);
+    setSelectedAnalysis((current) => {
+      if (current && analyses.some((a) => a.id === current.id)) {
+        // Update with any fresh fields from the server.
+        return analyses.find((a) => a.id === current.id) ?? current;
+      }
+      return latestAnalysis;
+    });
+  }, [latestAnalysis, analyses]);
+
+  const analysis = selectedAnalysis;
 
   const switchTab = useCallback(
     (next: Tab) => {
@@ -122,11 +135,26 @@ export function ProjectDetailClient({
         review_count: payload.reviewCount,
         created_at: new Date().toISOString(),
       };
-      setAnalysis(optimistic);
+      setSelectedAnalysis(optimistic);
       router.refresh();
       switchTab("analysis");
     },
     [router, switchTab]
+  );
+
+  const handleHistorySelect = useCallback(
+    (id: string) => {
+      const target = analyses.find((a) => a.id === id);
+      if (!target) return;
+      setSelectedAnalysis(target);
+      switchTab("analysis");
+      const dateLabel = new Date(target.created_at).toLocaleDateString(
+        "en-US",
+        { year: "numeric", month: "short", day: "numeric" }
+      );
+      toast(`Loaded analysis from ${dateLabel}`);
+    },
+    [analyses, switchTab]
   );
 
   return (
@@ -189,6 +217,14 @@ export function ProjectDetailClient({
       )}
 
       {tab === "analysis" && <AnalysisTab analysis={analysis} />}
+
+      {tab === "history" && (
+        <HistoryTab
+          analyses={analysesHistory}
+          activeId={analysis?.id ?? null}
+          onSelect={handleHistorySelect}
+        />
+      )}
     </div>
   );
 }
@@ -304,67 +340,6 @@ function Stat({
       <div style={{ fontSize: 14, color: "var(--tx)", fontWeight: 600 }}>
         {value}
       </div>
-    </div>
-  );
-}
-
-function ReviewsTab({ reviews }: { reviews: ReviewRow[] }) {
-  if (reviews.length === 0) {
-    return (
-      <Card padding={24}>
-        <p
-          data-testid="reviews-empty"
-          style={{ fontSize: 13, color: "var(--tx2)", margin: 0 }}
-        >
-          No reviews yet. Use the Add Reviews tab to import reviews.
-        </p>
-      </Card>
-    );
-  }
-
-  return (
-    <div
-      data-testid="reviews-tab"
-      style={{ display: "flex", flexDirection: "column", gap: 12 }}
-    >
-      {reviews.map((r) => (
-        <Card key={r.id} padding={16}>
-          <div
-            data-testid={`review-item-${r.id}`}
-            style={{ display: "flex", flexDirection: "column", gap: 8 }}
-          >
-            <p
-              data-testid="review-content"
-              style={{
-                fontSize: 14,
-                color: "var(--tx)",
-                lineHeight: 1.5,
-                margin: 0,
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {r.content}
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                fontSize: 12,
-                color: "var(--tx3)",
-                flexWrap: "wrap",
-              }}
-            >
-              {typeof r.rating === "number" && (
-                <span>
-                  {r.rating}/5 ★
-                </span>
-              )}
-              {r.source && <span>{r.source}</span>}
-              <span>{new Date(r.created_at).toLocaleDateString("en-US")}</span>
-            </div>
-          </div>
-        </Card>
-      ))}
     </div>
   );
 }

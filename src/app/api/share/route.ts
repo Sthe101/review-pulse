@@ -174,9 +174,10 @@ export async function POST(req: NextRequest) {
     const token = insertRes.data.share_token;
     return NextResponse.json({ url: shareUrl(req, token), token });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unexpected share failure.";
     console.error("[/api/share] unhandled:", err);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unexpected error. Please try again." },
+      { status: 500 },
+    );
   }
 }

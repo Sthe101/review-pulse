@@ -91,6 +91,16 @@ type ReviewRow = {
   content: string;
   rating: number | null;
   source: string | null;
+  sentiment: string | null;
+  themes: string[] | null;
+  created_at: string;
+};
+
+type AnalysisHistoryRow = {
+  id: string;
+  summary: string | null;
+  overall_score: number | null;
+  review_count: number;
   created_at: string;
 };
 
@@ -139,7 +149,7 @@ type ReviewsListQuery = {
   };
 };
 
-type LatestAnalysisQuery = {
+type AnalysesListQuery = {
   select: (cols: string) => {
     eq: (
       col: string,
@@ -148,14 +158,10 @@ type LatestAnalysisQuery = {
       order: (
         col: string,
         opts: { ascending: boolean }
-      ) => {
-        limit: (n: number) => {
-          maybeSingle: () => Promise<{
-            data: LatestAnalysisRow | null;
-            error: unknown;
-          }>;
-        };
-      };
+      ) => Promise<{
+        data: LatestAnalysisRow[] | null;
+        error: unknown;
+      }>;
     };
   };
 };
@@ -196,51 +202,55 @@ export default async function ProjectDetailPage({
   const reviewsListRes = await (
     supabase.from("reviews") as unknown as ReviewsListQuery
   )
-    .select("id, content, rating, source, created_at")
+    .select("id, content, rating, source, sentiment, themes, created_at")
     .eq("project_id", id)
     .order("created_at", { ascending: false })
     .limit(100);
 
   const reviews = reviewsListRes.data ?? [];
 
-  const latestRes = await (
-    supabase.from("analyses") as unknown as LatestAnalysisQuery
+  const analysesRes = await (
+    supabase.from("analyses") as unknown as AnalysesListQuery
   )
     .select(
       "id, summary, sentiment_positive, sentiment_neutral, sentiment_negative, sentiment_mixed, overall_score, complaints, praises, feature_requests, action_items, rating_distribution, review_count, created_at"
     )
     .eq("project_id", id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
 
-  const latestAnalysis: LatestAnalysis | null = latestRes.data
-    ? {
-        id: latestRes.data.id,
-        summary: latestRes.data.summary,
-        sentiment_positive: latestRes.data.sentiment_positive,
-        sentiment_neutral: latestRes.data.sentiment_neutral,
-        sentiment_negative: latestRes.data.sentiment_negative,
-        sentiment_mixed: latestRes.data.sentiment_mixed,
-        overall_score: latestRes.data.overall_score,
-        complaints: parseJsonbArray<ComplaintItem>(latestRes.data.complaints),
-        praises: parseJsonbArray<MentionItem>(latestRes.data.praises),
-        feature_requests: parseJsonbArray<MentionItem>(
-          latestRes.data.feature_requests
-        ),
-        action_items: parseJsonbArray<ActionItem>(latestRes.data.action_items),
-        rating_distribution: parseJsonbObject(
-          latestRes.data.rating_distribution
-        ),
-        review_count: latestRes.data.review_count,
-        created_at: latestRes.data.created_at,
-      }
-    : null;
+  const analyses: LatestAnalysis[] = (analysesRes.data ?? []).map((row) => ({
+    id: row.id,
+    summary: row.summary,
+    sentiment_positive: row.sentiment_positive,
+    sentiment_neutral: row.sentiment_neutral,
+    sentiment_negative: row.sentiment_negative,
+    sentiment_mixed: row.sentiment_mixed,
+    overall_score: row.overall_score,
+    complaints: parseJsonbArray<ComplaintItem>(row.complaints),
+    praises: parseJsonbArray<MentionItem>(row.praises),
+    feature_requests: parseJsonbArray<MentionItem>(row.feature_requests),
+    action_items: parseJsonbArray<ActionItem>(row.action_items),
+    rating_distribution: parseJsonbObject(row.rating_distribution),
+    review_count: row.review_count,
+    created_at: row.created_at,
+  }));
+
+  const analysesHistory: AnalysisHistoryRow[] = analyses.map((a) => ({
+    id: a.id,
+    summary: a.summary,
+    overall_score: a.overall_score,
+    review_count: a.review_count,
+    created_at: a.created_at,
+  }));
+
+  // The list above is already ordered desc; the first row is the latest.
+  const latestAnalysis: LatestAnalysis | null = analyses[0] ?? null;
 
   const initialTab =
     tabParam === "reviews" ||
     tabParam === "add-reviews" ||
-    tabParam === "analysis"
+    tabParam === "analysis" ||
+    tabParam === "history"
       ? tabParam
       : "overview";
 
@@ -302,6 +312,8 @@ export default async function ProjectDetailPage({
         reviewCount={reviewCount}
         reviews={reviews}
         latestAnalysis={latestAnalysis}
+        analyses={analyses}
+        analysesHistory={analysesHistory}
         initialTab={initialTab}
       />
     </div>
